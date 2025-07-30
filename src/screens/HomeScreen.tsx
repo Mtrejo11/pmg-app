@@ -3,9 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   ActivityIndicator,
-  RefreshControl,
   SafeAreaView,
 } from "react-native";
 import { ApolloProvider } from "@apollo/client";
@@ -24,41 +22,31 @@ import {
 
 export const HomeScreen: React.FC = () => {
   const [heroData, setHeroData] = useState<BlockHomeHeroSlider | null>(null);
-  const [announcementsData, setAnnouncementsData] =
-    useState<AnnouncementsResponse | null>(null);
+  const [announcementsData, setAnnouncementsData] = useState<AnnouncementsResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      setError(null);
 
-      // Fetch BlockHomeHeroSlider data from Space 1
-      const heroResponse = await fetchBlockHomeHeroSlider();
+      // Fetch data from both Contentful spaces
+      const [heroResponse, announcementsResponse] = await Promise.all([
+        fetchBlockHomeHeroSlider(),
+        fetchAnnouncementsData(),
+      ]);
+
       setHeroData(heroResponse);
-
-      // Fetch announcements data from Space 2
-      const announcementsResponse = await fetchAnnouncementsData();
       setAnnouncementsData(announcementsResponse);
     } catch (err) {
       console.error("Error fetching data:", err);
-      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   };
 
   useEffect(() => {
     fetchData();
   }, []);
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchData();
-  };
 
   if (loading) {
     return (
@@ -69,38 +57,27 @@ export const HomeScreen: React.FC = () => {
     );
   }
 
-  if (error) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Error: {error}</Text>
-        <Text style={styles.retryText}>Pull to refresh to try again</Text>
-      </View>
-    );
-  }
-
   if (!heroData) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>No hero data available</Text>
+        <Text style={styles.errorText}>No data available</Text>
       </View>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.container}>
-        {/* Section 1: Teal Banner */}
-        <ApolloProvider client={clientSpace2}>
-          <BlockHomeHeroSliderComponent 
-            announcements={announcementsData?.announcementCollection?.items || []} 
-          />
-        </ApolloProvider>
+      {/* Banner Section */}
+      <ApolloProvider client={clientSpace2}>
+        <BlockHomeHeroSliderComponent 
+          announcements={announcementsData?.announcementCollection?.items || []} 
+        />
+      </ApolloProvider>
 
-        {/* Section 2: Stories Slider */}
-        <ApolloProvider client={clientSpace1}>
-          <StoriesSlider data={heroData} />
-        </ApolloProvider>
-      </View>
+      {/* Stories Section */}
+      <ApolloProvider client={clientSpace1}>
+        <StoriesSlider data={heroData} />
+      </ApolloProvider>
     </SafeAreaView>
   );
 };
@@ -131,12 +108,6 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 16,
     color: "#dc3545",
-    textAlign: "center",
-    marginBottom: 10,
-  },
-  retryText: {
-    fontSize: 14,
-    color: "#666",
     textAlign: "center",
   },
 });

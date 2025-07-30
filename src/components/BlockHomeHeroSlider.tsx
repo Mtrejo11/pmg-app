@@ -29,16 +29,29 @@ export const BlockHomeHeroSliderComponent: React.FC<
     );
   };
 
+  const handleLinkPress = async (ctaUrl: string) => {
+    try {
+      await Linking.openURL(
+        `${process.env.EXPO_PUBLIC_BASE_SITE_URL}${currentAnnouncement.ctaUrl}`
+      );
+    } catch (error) {
+      console.error("Error opening URL:", error);
+    }
+  };
+
   const currentAnnouncement = announcements[currentIndex];
+
+  if (!currentAnnouncement) {
+    return null;
+  }
 
   return (
     <View style={styles.container}>
-      {/* Teal Banner */}
       <View
         style={[
           styles.tealBanner,
           {
-            backgroundColor: currentAnnouncement?.backgroundColor || "#00CED1",
+            backgroundColor: currentAnnouncement.backgroundColor || "#00CED1",
           },
         ]}
       >
@@ -47,17 +60,10 @@ export const BlockHomeHeroSliderComponent: React.FC<
         </TouchableOpacity>
 
         <View style={styles.bannerContent}>
-          <Text style={styles.bannerText}>
-            {currentAnnouncement?.message ||
-              "PMG has been named to the 2023 Ad Age A-List!"}
-          </Text>
-          {currentAnnouncement?.ctaLabel && (
+          <Text style={styles.bannerText}>{currentAnnouncement.message}</Text>
+          {currentAnnouncement.ctaLabel && currentAnnouncement.ctaUrl && (
             <TouchableOpacity
-              onPress={() =>
-                Linking.openURL(
-                  `https://www.pmg.com/${currentAnnouncement.ctaUrl}`
-                )
-              }
+              onPress={() => handleLinkPress(currentAnnouncement.ctaUrl)}
             >
               <Text style={styles.bannerLink}>
                 {currentAnnouncement.ctaLabel}

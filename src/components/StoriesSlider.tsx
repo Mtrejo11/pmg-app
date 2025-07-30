@@ -1,18 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  Dimensions,
   TouchableOpacity,
   Image,
   Linking,
   Animated,
-} from 'react-native';
-import { Video, ResizeMode } from 'expo-av';
-import { BlockHomeHeroSlider } from '../types/contentful';
-
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+} from "react-native";
+import { Video, ResizeMode } from "expo-av";
+import { BlockHomeHeroSlider } from "../types/contentful";
 
 interface StoriesSliderProps {
   data: BlockHomeHeroSlider;
@@ -35,22 +32,12 @@ interface HeroSlide {
 
 export const StoriesSlider: React.FC<StoriesSliderProps> = ({ data }) => {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [firstAnimationStarted, setFirstAnimationStarted] = useState(false);
-  const [isComponentReady, setIsComponentReady] = useState(false);
-  const [imageLoadErrors, setImageLoadErrors] = useState<Set<number>>(new Set());
+  const [imageLoadErrors, setImageLoadErrors] = useState<Set<number>>(
+    new Set()
+  );
   const videoRef = useRef<Video>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const progressAnimations = useRef<Animated.Value[]>([]);
-
-  // Mark component as ready after initial mount
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsComponentReady(true);
-    }, 500); // Wait 500ms for component to be fully mounted
-
-    return () => clearTimeout(timer);
-  }, []);
 
   // Convert BlockHomeHeroSlider data to slides array
   const slides: HeroSlide[] = [
@@ -86,23 +73,14 @@ export const StoriesSlider: React.FC<StoriesSliderProps> = ({ data }) => {
       mobileImageOrVideo: data.slide4MobileImageOrVideo,
       enableDarkBackdrop: data.slide4EnableDarkBackdrop,
     },
-    {
-      title: data.slide5Title,
-      eyebrowText: data.slide5EyebrowText,
-      eyebrowImage: data.slide5EyebrowImage,
-      targetUrl: data.slide5TargetUrl,
-      mobileImageOrVideo: data.slide5MobileImageOrVideo,
-      enableDarkBackdrop: data.slide5EnableDarkBackdrop,
-    },
-  ].filter(slide => slide.title && slide.eyebrowText && slide.mobileImageOrVideo); // Filter out empty slides
+  ];
 
-  // Initialize progress animations when slides are loaded
+  // Initialize progress animations
   useEffect(() => {
     progressAnimations.current = slides.map(() => new Animated.Value(0));
-    
-    // Start the first slide's animation immediately if we have slides
+
+    // Start first slide animation
     if (slides.length > 0 && progressAnimations.current[0]) {
-      // Force the first animation to start immediately
       setTimeout(() => {
         if (progressAnimations.current[0]) {
           Animated.timing(progressAnimations.current[0], {
@@ -111,38 +89,34 @@ export const StoriesSlider: React.FC<StoriesSliderProps> = ({ data }) => {
             useNativeDriver: false,
           }).start();
         }
-      }, 100); // Small delay to ensure component is mounted
+      }, 100);
     }
-  }, [slides.length, isComponentReady]);
+  }, [slides.length]);
 
-  // Start progress animation for current slide
+  // Handle slide changes
   useEffect(() => {
-    // Reset all progress bars first
+    // Reset progress bars
     progressAnimations.current.forEach((animation, index) => {
       if (index < currentSlideIndex) {
-        // Previous slides should be full
         animation.setValue(1);
       } else if (index > currentSlideIndex) {
-        // Future slides should be empty
         animation.setValue(0);
       } else {
-        // Current slide starts from 0
         animation.setValue(0);
       }
     });
 
-    // Start animation for current slide - maximum 10 seconds
+    // Start current slide animation
     if (progressAnimations.current[currentSlideIndex]) {
       Animated.timing(progressAnimations.current[currentSlideIndex], {
         toValue: 1,
-        duration: 10000, // 10 seconds maximum
+        duration: 10000,
         useNativeDriver: false,
       }).start();
     }
 
-    // 10-second timeout to force next slide
+    // Set timeout for auto-advance
     timeoutRef.current = setTimeout(() => {
-      // Stop the video before going to next slide
       if (videoRef.current) {
         videoRef.current.stopAsync();
       }
@@ -157,79 +131,48 @@ export const StoriesSlider: React.FC<StoriesSliderProps> = ({ data }) => {
     };
   }, [currentSlideIndex]);
 
-  // Reset firstAnimationStarted when looping back to first slide
-  useEffect(() => {
-    if (currentSlideIndex === 0 && firstAnimationStarted) {
-      setFirstAnimationStarted(false);
-    }
-  }, [currentSlideIndex, firstAnimationStarted]);
-
   const currentSlide = slides[currentSlideIndex];
 
   if (!currentSlide) return null;
 
-  // Reset video state when slide changes
-  useEffect(() => {
-    setIsPlaying(true);
-  }, [currentSlideIndex]);
-
-  const goToNextSlide = () => {
-    // Clear timeout if it exists
+  const clearTimeoutAndAnimation = () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-    // Stop current animation
     if (progressAnimations.current[currentSlideIndex]) {
       progressAnimations.current[currentSlideIndex].stopAnimation();
     }
-    
+  };
+
+  const goToNextSlide = () => {
+    clearTimeoutAndAnimation();
+
     if (currentSlideIndex < slides.length - 1) {
       setCurrentSlideIndex(currentSlideIndex + 1);
     } else {
-      // Loop back to first slide
       setCurrentSlideIndex(0);
     }
   };
 
   const goToPreviousSlide = () => {
-    // Clear timeout if it exists
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    // Stop current animation
-    if (progressAnimations.current[currentSlideIndex]) {
-      progressAnimations.current[currentSlideIndex].stopAnimation();
-    }
-    
+    clearTimeoutAndAnimation();
+
     if (currentSlideIndex > 0) {
       setCurrentSlideIndex(currentSlideIndex - 1);
     } else {
-      // Loop to last slide
       setCurrentSlideIndex(slides.length - 1);
     }
   };
 
-  const handleSlidePress = async (targetUrl: string) => {
-    if (targetUrl) {
-      try {
-        await Linking.openURL(targetUrl);
-      } catch (error) {
-        console.error('Error opening URL:', error);
-      }
-    }
-  };
-
   const onPlaybackStatusUpdate = (status: any) => {
-    // Check if video finished (either by didJustFinish or by position reaching duration)
-    // But only if we haven't already triggered the timeout
-    if (status.isLoaded && (
-      status.didJustFinish || 
-      (status.positionMillis > 0 && status.durationMillis > 0 && 
-       status.positionMillis >= status.durationMillis - 100) // Allow 100ms tolerance
-    )) {
-      // Clear the timeout since video finished naturally
+    if (
+      status.isLoaded &&
+      (status.didJustFinish ||
+        (status.positionMillis > 0 &&
+          status.durationMillis > 0 &&
+          status.positionMillis >= status.durationMillis - 100))
+    ) {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
@@ -242,7 +185,7 @@ export const StoriesSlider: React.FC<StoriesSliderProps> = ({ data }) => {
     <View style={styles.container}>
       {slides.length > 0 && (
         <>
-          {/* Video/Image Background */}
+          {/* Video Background */}
           {currentSlide.mobileImageOrVideo && (
             <Video
               ref={videoRef}
@@ -257,7 +200,7 @@ export const StoriesSlider: React.FC<StoriesSliderProps> = ({ data }) => {
                   videoRef.current.playAsync();
                 }
               }}
-              onError={(error) => {
+              onError={() => {
                 // Handle video loading errors silently
               }}
               key={`video-${currentSlideIndex}`}
@@ -265,28 +208,33 @@ export const StoriesSlider: React.FC<StoriesSliderProps> = ({ data }) => {
           )}
 
           {/* Dark Overlay */}
-          {currentSlide.enableDarkBackdrop && (
-            <View style={styles.overlay} />
-          )}
+          {currentSlide.enableDarkBackdrop && <View style={styles.overlay} />}
 
           {/* Content Container */}
           <View style={styles.contentContainer}>
             {/* Top Section - Eyebrow */}
             <View style={styles.topSection}>
-              {currentSlide.eyebrowImage && !imageLoadErrors.has(currentSlideIndex) ? (
+              {currentSlide.eyebrowImage &&
+              !imageLoadErrors.has(currentSlideIndex) ? (
                 <Image
-                  source={{ uri: typeof currentSlide.eyebrowImage === 'string' ? currentSlide.eyebrowImage : currentSlide.eyebrowImage.url }}
+                  source={{
+                    uri:
+                      typeof currentSlide.eyebrowImage === "string"
+                        ? currentSlide.eyebrowImage
+                        : currentSlide.eyebrowImage.url,
+                  }}
                   style={styles.eyebrowImage}
                   resizeMode="contain"
-                  onLoad={() => {
-                    // Image loaded successfully
-                  }}
-                  onError={(error) => {
-                    setImageLoadErrors(prev => new Set([...prev, currentSlideIndex]));
+                  onError={() => {
+                    setImageLoadErrors(
+                      (prev) => new Set([...prev, currentSlideIndex])
+                    );
                   }}
                 />
               ) : currentSlide.eyebrowText ? (
-                <Text style={styles.eyebrowText}>{currentSlide.eyebrowText}</Text>
+                <Text style={styles.eyebrowText}>
+                  {currentSlide.eyebrowText}
+                </Text>
               ) : null}
               {/* Title */}
               <Text style={styles.title}>{currentSlide.title}</Text>
@@ -301,7 +249,7 @@ export const StoriesSlider: React.FC<StoriesSliderProps> = ({ data }) => {
               >
                 <Text style={styles.navButtonText}>‹</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={styles.navButton}
                 onPress={goToNextSlide}
@@ -311,7 +259,7 @@ export const StoriesSlider: React.FC<StoriesSliderProps> = ({ data }) => {
               </TouchableOpacity>
             </View>
 
-            {/* Bottom Section - Title and Progress */}
+            {/* Bottom Section - Progress */}
             <View style={styles.bottomSection}>
               {/* Progress Bars */}
               <View style={styles.progressContainer}>
@@ -321,18 +269,17 @@ export const StoriesSlider: React.FC<StoriesSliderProps> = ({ data }) => {
                       style={[
                         styles.progressBar,
                         {
-                          width: progressAnimations.current[index]?.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: ['0%', '100%'],
-                          }) || '0%',
+                          width:
+                            progressAnimations.current[index]?.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: ["0%", "100%"],
+                            }) || "0%",
                         },
                       ]}
                     />
                   </View>
                 ))}
               </View>
-
-              
             </View>
           </View>
         </>
@@ -344,39 +291,32 @@ export const StoriesSlider: React.FC<StoriesSliderProps> = ({ data }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: "#000",
   },
   backgroundVideo: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
-  },
-  backgroundImage: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     bottom: 0,
     right: 0,
   },
   overlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   contentContainer: {
     flex: 1,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 40,
   },
   topSection: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   eyebrowImage: {
@@ -386,55 +326,55 @@ const styles = StyleSheet.create({
   },
   eyebrowText: {
     fontSize: 16,
-    color: '#fff',
-    textAlign: 'center',
-    fontWeight: '600',
+    color: "#fff",
+    textAlign: "center",
+    fontWeight: "600",
   },
   centerSection: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
   },
   navButton: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(255,255,255,0.2)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   navButtonText: {
     fontSize: 24,
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
   },
   bottomSection: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   progressContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginBottom: 20,
     gap: 8,
   },
   progressBarContainer: {
     width: 60,
     height: 3,
-    backgroundColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: "rgba(255,255,255,0.3)",
     borderRadius: 2,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   progressBar: {
-    height: '100%',
-    backgroundColor: '#fff',
+    height: "100%",
+    backgroundColor: "#fff",
     borderRadius: 2,
   },
   title: {
     fontSize: 32,
-    color: '#fff',
-    textAlign: 'center',
-    fontWeight: 'bold',
+    color: "#fff",
+    textAlign: "center",
+    fontWeight: "bold",
     lineHeight: 36,
     letterSpacing: 1,
     maxWidth: 250,

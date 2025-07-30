@@ -10,6 +10,8 @@ import {
 } from "react-native";
 import { Video, ResizeMode } from "expo-av";
 import { BlockHomeHeroSlider } from "../types/contentful";
+import MenuIcon from "../assets/icons/Menu";
+import ArrowIcon from "../assets/icons/Arrow";
 
 interface StoriesSliderProps {
   data: BlockHomeHeroSlider;
@@ -214,48 +216,55 @@ export const StoriesSlider: React.FC<StoriesSliderProps> = ({ data }) => {
           <View style={styles.contentContainer}>
             {/* Top Section - Eyebrow */}
             <View style={styles.topSection}>
-              {currentSlide.eyebrowImage &&
-              !imageLoadErrors.has(currentSlideIndex) ? (
-                <Image
-                  source={{
-                    uri:
-                      typeof currentSlide.eyebrowImage === "string"
-                        ? currentSlide.eyebrowImage
-                        : currentSlide.eyebrowImage.url,
-                  }}
-                  style={styles.eyebrowImage}
-                  resizeMode="contain"
-                  onError={() => {
-                    setImageLoadErrors(
-                      (prev) => new Set([...prev, currentSlideIndex])
-                    );
-                  }}
-                />
-              ) : currentSlide.eyebrowText ? (
-                <Text style={styles.eyebrowText}>
-                  {currentSlide.eyebrowText}
-                </Text>
-              ) : null}
-              {/* Title */}
-              <Text style={styles.title}>{currentSlide.title}</Text>
+              <Image
+                source={require("../assets/images/logo.webp")}
+                style={styles.eyebrowImage}
+                resizeMode="contain"
+              />
+              {/* Menu Icon  */}
+              <TouchableOpacity
+                style={styles.navButton}
+                activeOpacity={0.7}
+              >
+                <MenuIcon width={24} height={24} color="#fff" />
+              </TouchableOpacity>
             </View>
 
             {/* Center Section - Navigation Controls */}
             <View style={styles.centerSection}>
-              <TouchableOpacity
-                style={styles.navButton}
-                onPress={goToPreviousSlide}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.navButtonText}>‹</Text>
-              </TouchableOpacity>
+              <View style={styles.eyebrowContainer}>
+                {currentSlide.eyebrowImage &&
+                !imageLoadErrors.has(currentSlideIndex) ? (
+                  <Image
+                    source={{
+                      uri:
+                        typeof currentSlide.eyebrowImage === "string"
+                          ? currentSlide.eyebrowImage
+                          : currentSlide.eyebrowImage.url,
+                    }}
+                    style={styles.eyebrowImage}
+                    resizeMode="contain"
+                    onError={() => {
+                      setImageLoadErrors(
+                        (prev) => new Set([...prev, currentSlideIndex])
+                      );
+                    }}
+                  />
+                ) : currentSlide.eyebrowText ? (
+                  <Text style={styles.eyebrowText}>
+                    {currentSlide.eyebrowText}
+                  </Text>
+                ) : null}
+                {/* Title */}
+                <Text style={styles.title}>{currentSlide.title}</Text>
+              </View>
 
               <TouchableOpacity
                 style={styles.navButton}
                 onPress={goToNextSlide}
                 activeOpacity={0.7}
               >
-                <Text style={styles.navButtonText}>›</Text>
+                <ArrowIcon color="#fff" />
               </TouchableOpacity>
             </View>
 
@@ -312,12 +321,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: 30,
     paddingBottom: 40,
   },
   topSection: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 20,
+    paddingHorizontal: 20,
   },
   eyebrowImage: {
     width: 80,
@@ -337,15 +349,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   navButton: {
-    width: 50,
-    height: 50,
+    width: 40,
+    height: 40,
     borderRadius: 25,
-    backgroundColor: "rgba(255,255,255,0.2)",
     justifyContent: "center",
     alignItems: "center",
   },
   navButtonText: {
-    fontSize: 24,
+    fontSize: 40,
     color: "#fff",
     fontWeight: "bold",
   },
@@ -373,10 +384,18 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     color: "#fff",
-    textAlign: "center",
+    textAlign: "left",
     fontWeight: "bold",
-    lineHeight: 36,
     letterSpacing: 1,
     maxWidth: 250,
+  },
+  menuIcon: {
+    width: 25,
+    height: 21,
+  },
+  eyebrowContainer: {
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: 10,
   },
 });

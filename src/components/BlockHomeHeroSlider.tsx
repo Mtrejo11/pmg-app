@@ -7,6 +7,7 @@ import {
   Linking,
 } from "react-native";
 import { Announcement } from "../types/contentful";
+import { useFonts } from "expo-font";
 
 interface BlockHomeHeroSliderProps {
   announcements: Announcement[];
@@ -16,7 +17,10 @@ export const BlockHomeHeroSliderComponent: React.FC<
   BlockHomeHeroSliderProps
 > = ({ announcements }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-
+  const [loaded] = useFonts({
+    FontName: require("../assets/fonts/RobotoCondensed-Regular.ttf"),
+  });
+  
   const goToNext = () => {
     setCurrentIndex((prevIndex) =>
       prevIndex === announcements.length - 1 ? 0 : prevIndex + 1
@@ -41,7 +45,7 @@ export const BlockHomeHeroSliderComponent: React.FC<
 
   const currentAnnouncement = announcements[currentIndex];
 
-  if (!currentAnnouncement) {
+  if (!currentAnnouncement || !loaded) {
     return null;
   }
 
@@ -112,11 +116,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     textAlign: "center",
+    fontFamily: "RobotoCondensed",
   },
   bannerLink: {
     color: "#fff",
     fontSize: 12,
     textDecorationLine: "underline",
     marginTop: 2,
+    fontFamily: "RobotoCondensed",
   },
 });

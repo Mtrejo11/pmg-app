@@ -208,17 +208,116 @@ Contains:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 👥 Team
+# Libraries Overview - PMG App
 
-- **Developer**: [Your Name]
-- **Project**: PMG App
-- **Framework**: React Native with Expo
-- **CMS**: Contentful
+Quick overview of key libraries used in the PMG App and their implementation.
+
+## 🚀 Core Libraries
+
+### **expo** (v50.0.0)
+- **Purpose**: React Native framework with Expo
+- **Usage**: Core app foundation, development server, native APIs
+
+### **react-native** (v0.73.0)
+- **Purpose**: Mobile app development
+- **Key Components**: View, Text, TouchableOpacity, Image, Animated, SafeAreaView, Linking
+
+### **@apollo/client** (v3.8.0)
+- **Purpose**: GraphQL client for Contentful
+- **Usage**: `src/services/contentful.ts` - API queries and caching
+- **Implementation**: Separate clients for different Contentful spaces
+
+## 🎨 UI & Animation
+
+### **react-native-snap-carousel** (v3.9.1)
+- **Purpose**: Carousel component for banner navigation
+- **Usage**: `BlockHomeHeroSlider.tsx` - Announcement cycling with arrows
+
+### **expo-av** (v13.10.0)
+- **Purpose**: Video playback for stories
+- **Usage**: `StoriesSlider.tsx` - Background video with auto-advance
+- **Features**: Playback status monitoring, error handling
+
+### **react-native-reanimated** (v3.17.4)
+- **Purpose**: Advanced animations
+- **Usage**: Progress bar animations in StoriesSlider
+- **Implementation**: Animated.Value for smooth progress transitions
+
+## 🛠️ Development Tools
+
+### **patch-package** (v8.0.0)
+- **Purpose**: Applies patches to node_modules
+- **Usage**: Fixes react-native-snap-carousel ViewPropTypes issues
+- **Auto-applied**: Via postinstall script
+
+### **deprecated-react-native-prop-types** (v4.0.0)
+- **Purpose**: ViewPropTypes compatibility
+- **Usage**: Required by react-native-snap-carousel
+
+### **react-native-gesture-handler** (v2.24.0)
+- **Purpose**: Touch and gesture system
+- **Usage**: Used by react-native-snap-carousel for navigation
+
+## 📊 State Management
+
+### **React Hooks**
+- **useState**: Component state (slide index, errors, loading)
+- **useEffect**: Side effects (animations, data fetching)
+- **useRef**: DOM references (video ref, timeouts)
+
+## 🎯 Key Implementations
+
+### **Contentful Integration**
+```typescript
+// src/services/contentful.ts
+const { data } = await clientSpace1.query({
+  query: GET_BLOCK_HOME_HERO_SLIDER,
+});
+```
+
+### **Video Playback**
+```typescript
+// src/components/StoriesSlider.tsx
+<Video
+  source={{ uri: currentSlide.mobileImageOrVideo }}
+  shouldPlay
+  onPlaybackStatusUpdate={onPlaybackStatusUpdate}
+/>
+```
+
+### **Progress Animation**
+```typescript
+// Progress bar animation
+Animated.timing(progressAnimations.current[index], {
+  toValue: 1,
+  duration: 10000,
+  useNativeDriver: false,
+}).start();
+```
+
+## 🔧 Configuration
+
+### **Environment Variables**
+- `EXPO_PUBLIC_SPACE1_TOKEN`: Contentful Space 1 access token
+- `EXPO_PUBLIC_SPACE2_TOKEN`: Contentful Space 2 access token
+- `EXPO_PUBLIC_HERO_SLIDER_CONTENT_ID`: Content ID for hero slider
+- `EXPO_PUBLIC_BASE_SITE_URL`: Base URL for external links
+
+### **Apollo Client Setup**
+- **Space 1**: BlockHomeHeroSlider content (stories)
+- **Space 2**: Announcement content (banner)
+- **Caching**: Automatic response caching
+- **Error Handling**: Comprehensive error management
+
+## 📈 Performance Notes
+
+- **Caching**: Apollo Client provides automatic caching
+- **Animations**: Native driver for performance
+- **Memory**: Proper cleanup of video resources
+- **Error Handling**: Graceful fallbacks for failed content
 
 ---
 
-For support or questions, please contact [your-email@example.com] 
+For detailed implementation, see individual component files in `src/`. 

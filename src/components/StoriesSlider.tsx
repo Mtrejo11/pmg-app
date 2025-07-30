@@ -5,13 +5,15 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
-  Linking,
   Animated,
+  ActivityIndicator,
 } from "react-native";
 import { Video, ResizeMode } from "expo-av";
 import { BlockHomeHeroSlider } from "../types/contentful";
 import MenuIcon from "../assets/icons/Menu";
 import ArrowIcon from "../assets/icons/Arrow";
+import { SmartRemoteImage } from "./SmartRemoteImage";
+import { useFonts } from "expo-font";
 
 interface StoriesSliderProps {
   data: BlockHomeHeroSlider;
@@ -34,12 +36,13 @@ interface HeroSlide {
 
 export const StoriesSlider: React.FC<StoriesSliderProps> = ({ data }) => {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [imageLoadErrors, setImageLoadErrors] = useState<Set<number>>(
-    new Set()
-  );
   const videoRef = useRef<Video>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const progressAnimations = useRef<Animated.Value[]>([]);
+
+  const [loaded] = useFonts({
+    FontName: require("../assets/fonts/RobotoCondensed-Black.ttf"),
+  });
 
   // Convert BlockHomeHeroSlider data to slides array
   const slides: HeroSlide[] = [
@@ -157,16 +160,6 @@ export const StoriesSlider: React.FC<StoriesSliderProps> = ({ data }) => {
     }
   };
 
-  const goToPreviousSlide = () => {
-    clearTimeoutAndAnimation();
-
-    if (currentSlideIndex > 0) {
-      setCurrentSlideIndex(currentSlideIndex - 1);
-    } else {
-      setCurrentSlideIndex(slides.length - 1);
-    }
-  };
-
   const onPlaybackStatusUpdate = (status: any) => {
     if (
       status.isLoaded &&
@@ -182,6 +175,13 @@ export const StoriesSlider: React.FC<StoriesSliderProps> = ({ data }) => {
       goToNextSlide();
     }
   };
+
+  if (!loaded)
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#00CED1" />
+      </View>
+    );
 
   return (
     <View style={styles.container}>
@@ -222,10 +222,7 @@ export const StoriesSlider: React.FC<StoriesSliderProps> = ({ data }) => {
                 resizeMode="contain"
               />
               {/* Menu Icon  */}
-              <TouchableOpacity
-                style={styles.navButton}
-                activeOpacity={0.7}
-              >
+              <TouchableOpacity style={styles.navButton} activeOpacity={0.7}>
                 <MenuIcon width={24} height={24} color="#fff" />
               </TouchableOpacity>
             </View>
@@ -233,28 +230,12 @@ export const StoriesSlider: React.FC<StoriesSliderProps> = ({ data }) => {
             {/* Center Section - Navigation Controls */}
             <View style={styles.centerSection}>
               <View style={styles.eyebrowContainer}>
-                {currentSlide.eyebrowImage &&
-                !imageLoadErrors.has(currentSlideIndex) ? (
-                  <Image
-                    source={{
-                      uri:
-                        typeof currentSlide.eyebrowImage === "string"
-                          ? currentSlide.eyebrowImage
-                          : currentSlide.eyebrowImage.url,
-                    }}
-                    style={styles.eyebrowImage}
-                    resizeMode="contain"
-                    onError={() => {
-                      setImageLoadErrors(
-                        (prev) => new Set([...prev, currentSlideIndex])
-                      );
-                    }}
-                  />
-                ) : currentSlide.eyebrowText ? (
-                  <Text style={styles.eyebrowText}>
-                    {currentSlide.eyebrowText}
-                  </Text>
-                ) : null}
+                <SmartRemoteImage
+                  image={currentSlide.eyebrowImage}
+                  fallbackText={currentSlide.eyebrowText}
+                  style={styles.eyebrowImage}
+                />
+
                 {/* Title */}
                 <Text style={styles.title}>{currentSlide.title}</Text>
               </View>
@@ -382,12 +363,12 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   title: {
-    fontSize: 32,
+    fontFamily: "RobotoCondensed",
+    fontSize: 42,
     color: "#fff",
     textAlign: "left",
-    fontWeight: "bold",
-    letterSpacing: 1,
-    maxWidth: 250,
+    maxWidth: 220,
+    textTransform: "uppercase",
   },
   menuIcon: {
     width: 25,
@@ -396,6 +377,6 @@ const styles = StyleSheet.create({
   eyebrowContainer: {
     flexDirection: "column",
     alignItems: "flex-start",
-    gap: 10,
+    gap: 5,
   },
 });

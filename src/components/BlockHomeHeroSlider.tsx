@@ -18,7 +18,7 @@ export const BlockHomeHeroSliderComponent: React.FC<
 > = ({ announcements }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loaded] = useFonts({
-    FontName: require("../assets/fonts/RobotoCondensed-Regular.ttf"),
+    RobotoCondensed: require("../assets/fonts/RobotoCondensed-Regular.ttf"),
   });
   
   const goToNext = () => {
@@ -110,6 +110,7 @@ const styles = StyleSheet.create({
   bannerContent: {
     flex: 1,
     alignItems: "center",
+    marginHorizontal: 10,
   },
   bannerText: {
     color: "#fff",

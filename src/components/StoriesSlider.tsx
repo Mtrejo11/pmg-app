@@ -14,6 +14,7 @@ import MenuIcon from "../assets/icons/Menu";
 import ArrowIcon from "../assets/icons/Arrow";
 import { SmartRemoteImage } from "./SmartRemoteImage";
 import { useFonts } from "expo-font";
+import LogoIcon from "../assets/icons/Logo";
 
 interface StoriesSliderProps {
   data: BlockHomeHeroSlider;
@@ -41,7 +42,7 @@ export const StoriesSlider: React.FC<StoriesSliderProps> = ({ data }) => {
   const progressAnimations = useRef<Animated.Value[]>([]);
 
   const [loaded] = useFonts({
-    FontName: require("../assets/fonts/RobotoCondensed-Black.ttf"),
+    RobotoCondensedBlack: require("../assets/fonts/RobotoCondensed-Black.ttf"),
   });
 
   // Convert BlockHomeHeroSlider data to slides array
@@ -202,9 +203,6 @@ export const StoriesSlider: React.FC<StoriesSliderProps> = ({ data }) => {
                   videoRef.current.playAsync();
                 }
               }}
-              onError={() => {
-                // Handle video loading errors silently
-              }}
               key={`video-${currentSlideIndex}`}
             />
           )}
@@ -216,11 +214,8 @@ export const StoriesSlider: React.FC<StoriesSliderProps> = ({ data }) => {
           <View style={styles.contentContainer}>
             {/* Top Section - Eyebrow */}
             <View style={styles.topSection}>
-              <Image
-                source={require("../assets/images/logo.webp")}
-                style={styles.eyebrowImage}
-                resizeMode="contain"
-              />
+
+              <LogoIcon width={100} height={25} />
               {/* Menu Icon  */}
               <TouchableOpacity style={styles.navButton} activeOpacity={0.7}>
                 <MenuIcon width={24} height={24} color="#fff" />
@@ -363,7 +358,7 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   title: {
-    fontFamily: "RobotoCondensed",
+    fontFamily: "RobotoCondensedBlack",
     fontSize: 42,
     color: "#fff",
     textAlign: "left",
